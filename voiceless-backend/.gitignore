@@ -1,0 +1,30 @@
+# Python
+venv/
+.venv/
+.venv*/
+venv311/
+.venv311/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment and secrets
+.env
+
+# App storage (uploads and separated audio)
+storage/
+
+# Model downloads
+*.pth
+*.th
+*.pt
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Frontend (if in the same repo)
+node_modules/
+dist/
