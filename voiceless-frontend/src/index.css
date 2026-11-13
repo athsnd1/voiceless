@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sky-soft: #ddf0fb;
+  --color-sky-main: #5bb6ea;
+  --color-sky-deep: #2b8fcb;
+  --color-cloud: #f6f9fc;
+  --color-ember: #e8590c;
+  --color-ember-deep: #c94a06;
+  --color-ink: #1d3144;
+  --color-muted: #5d7890;
+
+  --animate-slide: slide 1.4s ease-in-out infinite;
+
+  @keyframes slide {
+    0% { margin-left: -35%; }
+    100% { margin-left: 100%; }
+  }
+}
