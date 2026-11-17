@@ -1,23 +1,38 @@
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
+from app.config import (
+    UPLOAD_DIR, OUTPUT_DIR, ALLOWED_EXTENSIONS,
+    MAX_UPLOAD_MB, MAX_UPLOAD_BYTES, MAX_ACTIVE_PER_IP, MAX_QUEUED_JOBS,
+)
 
-from app.config import UPLOAD_DIR, ALLOWED_EXTENSIONS
+from app.config import UPLOAD_DIR, OUTPUT_DIR, ALLOWED_EXTENSIONS, MAX_UPLOAD_MB, MAX_UPLOAD_BYTES
 from app.schemas import Job
 from app import store
 from app.services.worker import submit_job
 
 from fastapi.responses import FileResponse
 
-from app.config import OUTPUT_DIR
 from app.schemas import JobState
+
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
 @router.post("")
-async def create_job(file: UploadFile = File(...)):
+async def create_job(request: Request, file: UploadFile = File(...)):
+    ip = request.client.host if request.client else "unknown"
+    if store.count_active() >= MAX_QUEUED_JOBS:
+        raise HTTPException(
+            status_code=503,
+            detail="The server is busy right now. Please try again in a few minutes.",
+        )
+    if store.count_active(ip) >= MAX_ACTIVE_PER_IP:
+        raise HTTPException(
+            status_code=429,
+            detail="You already have a song processing. Please wait for it to finish.",
+        )
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -28,12 +43,23 @@ async def create_job(file: UploadFile = File(...)):
     job_id = uuid.uuid4().hex
     save_path = UPLOAD_DIR / f"{job_id}{ext}"
 
-    with open(save_path, "wb") as f:
-        while chunk := await file.read(1024 * 1024):  # 1 MB at a time
-            f.write(chunk)
+    size = 0
+    try:
+        with open(save_path, "wb") as f:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > MAX_UPLOAD_BYTES:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File too large. Maximum is {MAX_UPLOAD_MB} MB.",
+                    )
+                f.write(chunk)
+    except Exception:
+        save_path.unlink(missing_ok=True)  # don't leave a partial file behind
+        raise
 
     job = Job(job_id=job_id, filename=file.filename or save_path.name)
-    store.add_job(job)
+    store.add_job(job, ip)
     submit_job(job_id, save_path)
     return job
 

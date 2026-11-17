@@ -10,17 +10,12 @@ executor = ThreadPoolExecutor(max_workers=1)
 
 
 def run_job(job_id: str, input_path: Path) -> None:
-    job = store.get_job(job_id)
-    if job is None:
-        return
-
-    job.state = JobState.processing
+    store.update_job(job_id, JobState.processing)
     try:
         separate(input_path)
-        job.state = JobState.done
+        store.update_job(job_id, JobState.done)
     except SeparationError as e:
-        job.state = JobState.failed
-        job.error = str(e)[:500]
+        store.update_job(job_id, JobState.failed, str(e)[:500])
 
 
 def submit_job(job_id: str, input_path: Path) -> None:
