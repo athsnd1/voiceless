@@ -28,7 +28,7 @@ from music, wrapped in a FastAPI backend and a React frontend.
 ### Backend
 
 ```bash
-cd backend
+cd voiceless-backend
 python -m venv venv311
 venv311\Scripts\activate        # Windows PowerShell: .\venv311\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -41,9 +41,9 @@ The first separation downloads the Demucs model, which is a one-time download.
 ### Frontend
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd voiceless-frontend
+pnpm install
+pnpm run dev
 ```
 
 Open http://localhost:5173. The backend only allows requests from this address.
