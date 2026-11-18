@@ -16,4 +16,11 @@
     0% { margin-left: -35%; }
     100% { margin-left: 100%; }
   }
+
+  --animate-sign: sign 2s ease-out 0.4s both;
+
+  @keyframes sign {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+  }
 }

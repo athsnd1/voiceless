@@ -8,10 +8,14 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 
-const API_URL = "http://127.0.0.1:8000";
+import signature from "./assets/signature.png";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 const ALLOWED = [".mp3", ".wav", ".flac", ".m4a", ".ogg"];
+const MAX_MB = 25;
 
 const queryClient = new QueryClient();
+
 
 /* ---------- API ---------- */
 
@@ -126,6 +130,10 @@ function Separator() {
       toast.error(`Unsupported file type. Use ${ALLOWED.join(", ")}`);
       return;
     }
+    if (f.size > MAX_MB * 1024 * 1024) {
+      toast.error(`File is too large. Maximum is ${MAX_MB} MB.`);
+      return;
+    }
     setFile(f);
   }
 
@@ -145,7 +153,7 @@ function Separator() {
   const downloadUrl = job ? `${API_URL}/jobs/${job.job_id}/instrumental` : "";
 
   return (
-    <main className="mx-auto max-w-155 px-5 py-14">
+        <main className="mx-auto w-full max-w-155 flex-1 px-5 py-14">
       <header className="mb-7 text-center">
         <h1 className="text-5xl font-extrabold tracking-tight">
           Voice<span className="text-ember">less</span>
@@ -231,7 +239,7 @@ function Separator() {
         {/* 3. Processing or done */}
         {jobId && state && state !== "failed" && (
           <div>
-            <ol className="mb-5 flex list-none items-center justify-between p-0">
+            <ol className="mb-5 flex flex-wrap list-none items-center justify-center gap-4 p-0">
               {STEPS.map((label, i) => {
                 const finished = i < stepIndex || state === "done";
                 const current = i === stepIndex && state !== "done";
@@ -308,14 +316,29 @@ function Separator() {
   );
 }
 
+function Footer() {
+  return (
+    <footer className="flex items-center justify-center gap-2 px-5 pb-8 pt-4 text-sm text-muted">
+      <span>© 2026</span>
+      <img
+        src={signature}
+        alt="Attah Sunday"
+        draggable={false}
+        className="h-10 w-auto animate-sign select-none motion-reduce:animate-none"
+      />
+    </footer>
+  );
+}
+
 /* ---------- App shell ---------- */
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-linear-to-b from-[#bfe3f7] to-cloud to-60% text-ink">
+      <div className="flex min-h-screen flex-col bg-linear-to-b from-[#bfe3f7] to-cloud to-60% text-ink">
         <Toaster position="top-center" />
         <Separator />
+        <Footer />
       </div>
     </QueryClientProvider>
   );
